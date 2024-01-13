@@ -18,10 +18,11 @@ pub fn store(funsweet: &mut FunSweet) {
                 if char.is_whitespace() {
                     println!("err: key can't contain whitespace");
                     return;
-                } else if char.is_numeric() {
-                    println!("err: key can't contain numbers");
-                    return;
                 }
+                // else if char.is_numeric() {
+                //     println!("err: key can't contain numbers");
+                //     return;
+                // }
             }
             funsweet.stored.insert(k.to_string(), v.clone());
         }
@@ -42,10 +43,11 @@ pub fn drop(funsweet: &mut FunSweet) {
                 if char.is_whitespace() {
                     println!("err: key can't contain whitespace");
                     return;
-                } else if char.is_numeric() {
-                    println!("err: key can't contain numbers");
-                    return;
                 }
+                // else if char.is_numeric() {
+                //     println!("err: key can't contain numbers");
+                //     return;
+                // }
             }
             funsweet.stored.remove_entry(k);
         }
