@@ -1,7 +1,8 @@
-use crate::funsweet::{ArgType, FunSweet};
+use crate::{
+    config::OUTPUT,
+    funsweet::{ArgType, FunSweet},
+};
 use inline_colorization::*;
-
-const OUTPUT: bool = true;
 
 pub fn store(funsweet: &mut FunSweet) {
     if funsweet.function_args.len() < 2 {

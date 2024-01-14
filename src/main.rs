@@ -5,11 +5,12 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod config;
+use config::{BENCHMARK, BENCHMARK_AMOUNT};
+
 mod function;
 mod funsweet;
 use funsweet::parse_content;
-
-const BENCHMARK: bool = true;
 
 #[derive(Parser)]
 struct Cli {
@@ -26,7 +27,7 @@ fn main() {
         let mut benchmark_results: Vec<Duration> = Vec::new();
         let mut benchmark_index = 0;
 
-        while benchmark_index < 5000 {
+        while benchmark_index < BENCHMARK_AMOUNT {
             let ran_program = Instant::now();
             parse_content(content.clone());
             benchmark_index += 1;

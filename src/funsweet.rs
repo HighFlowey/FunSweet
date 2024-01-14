@@ -1,7 +1,7 @@
 use core::fmt;
 use std::collections::HashMap;
 
-use crate::function;
+use crate::{config::VERSION, function};
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum ArgType {
@@ -25,6 +25,13 @@ pub struct FunSweet {
 
 impl FunSweet {
     pub fn new(content: &String) -> FunSweet {
+        let mut global_variables = HashMap::new();
+
+        global_variables.insert(
+            String::from("version"),
+            ArgType::String(VERSION.to_string()),
+        );
+
         return FunSweet {
             taking_string: false,
             taking_number: false,
@@ -32,7 +39,7 @@ impl FunSweet {
             function_active: false,
             function_name: String::from(""),
             function_args: Vec::new(),
-            stored: HashMap::new(),
+            stored: global_variables,
             index: 0,
             content: content.clone(),
             char: String::from(""),
@@ -67,16 +74,62 @@ impl fmt::Display for ArgType {
     }
 }
 
-pub fn pass_arg(mut funsweet: FunSweet) -> FunSweet {
-    let k = funsweet.word.clone();
-    let v = funsweet.stored.get(&k);
-    match v {
-        Some(v) => {
-            funsweet.function_args.push(v.clone());
+pub fn pass_arg(funsweet: &mut FunSweet) {
+    let k = &funsweet.word.trim().to_string();
+
+    if k.starts_with("!") {
+        let sliced_key = k[1..k.len()].to_string();
+        let v = funsweet.stored.get(&sliced_key);
+
+        match v {
+            Some(v) => {
+                funsweet.function_args.push(v.clone());
+            }
+            _ => {}
         }
-        _ => {}
+    } else if k.starts_with("\"") & k.ends_with("\"") {
+        let sliced_string = k[1..k.len() - 1].to_string();
+        funsweet.function_args.push(ArgType::String(sliced_string));
+    } else if k.chars().all(|x| x.is_numeric()) {
+        let numeric = k.parse().unwrap();
+        funsweet.function_args.push(ArgType::Number(numeric));
     }
-    return funsweet;
+}
+
+fn parse_arg(funsweet: &mut FunSweet) {
+    while funsweet.char != ";" && funsweet.char != "," {
+        funsweet.accept();
+        funsweet.next();
+    }
+
+    pass_arg(funsweet);
+}
+
+fn parse_function(funsweet: &mut FunSweet) {
+    while funsweet.char != ";" {
+        while funsweet.char.trim().is_empty() == false {
+            funsweet.next();
+        }
+
+        parse_arg(funsweet);
+        funsweet.reset();
+    }
+
+    if funsweet.function_name == "Print" || funsweet.function_name == "Warn" {
+        function::output(funsweet);
+    } else if funsweet.function_name == "Store" {
+        function::store(funsweet);
+    } else if funsweet.function_name == "Drop" {
+        function::drop(funsweet);
+    }
+}
+
+fn parse_comment(funsweet: &mut FunSweet) {
+    while funsweet.char != "\n" {
+        funsweet.next();
+    }
+
+    funsweet.reset();
 }
 
 pub fn parse_content(content: String) {
@@ -86,91 +139,17 @@ pub fn parse_content(content: String) {
         funsweet.next();
 
         if funsweet.word == "//" {
-            while funsweet.char != "\n" {
-                funsweet.next();
-            }
-
-            funsweet.reset();
-        }
-
-        if funsweet.taking_string == true && funsweet.char != "\"" {
-            funsweet.accept();
+            parse_comment(&mut funsweet);
         } else if funsweet.char == ";" {
-            if funsweet.taking_number == true {
-                funsweet.taking_number = false;
-                funsweet
-                    .function_args
-                    .push(ArgType::Number(funsweet.word.parse().unwrap()))
-            }
-
-            if funsweet.taking_variable == true {
-                funsweet.taking_variable = false;
-                funsweet = pass_arg(funsweet);
-            }
-
-            if funsweet.function_active == true {
-                funsweet.function_active = false;
-
-                if funsweet.function_name == "Print" || funsweet.function_name == "Warn" {
-                    function::output(&funsweet);
-                } else if funsweet.function_name == "Store" {
-                    function::store(&mut funsweet);
-                } else if funsweet.function_name == "Drop" {
-                    function::drop(&mut funsweet);
-                }
-            }
-
-            funsweet.function_name = String::from("");
-            funsweet.function_args.clear();
             funsweet.reset();
         } else if funsweet.char == "<" {
-            let function_name = funsweet.word.trim().to_string();
-            funsweet.function_name = function_name.clone();
+            funsweet.function_name = funsweet.word.clone();
+            funsweet.function_args.clear();
             funsweet.reset();
-            funsweet.function_active = true;
-        } else if funsweet.function_active == true {
-            if funsweet.char == "\"" {
-                if funsweet.taking_string == true {
-                    funsweet
-                        .function_args
-                        .push(ArgType::String(funsweet.word.clone()));
-                    funsweet.taking_string = false;
-                    funsweet.reset();
-                } else {
-                    funsweet.taking_string = true;
-                    funsweet.reset();
-                }
-            } else if funsweet.char.chars().next().unwrap().is_numeric() {
-                if funsweet.taking_number == false && funsweet.taking_variable == false {
-                    funsweet.taking_number = true;
-                    funsweet.reset();
-                }
 
-                funsweet.accept();
-            } else if funsweet.char == "," {
-                if funsweet.taking_number == true {
-                    funsweet.taking_number = false;
-                    funsweet
-                        .function_args
-                        .push(ArgType::Number(funsweet.word.parse().unwrap()))
-                } else if funsweet.taking_variable == true {
-                    funsweet.taking_variable = false;
-                    funsweet = pass_arg(funsweet);
-                } else if funsweet.word.is_empty() == false {
-                    funsweet
-                        .function_args
-                        .push(ArgType::String(funsweet.word.clone()));
-                }
-
-                funsweet.reset()
-            } else if funsweet.char == "!" {
-                // looking for variable
-                funsweet.taking_variable = true;
-            } else if funsweet.taking_variable && funsweet.char.trim().is_empty() == false {
-                funsweet.accept();
-            }
+            parse_function(&mut funsweet);
         } else if funsweet.char.trim().is_empty() {
-            // ignore
+            // do nothing
         } else {
             funsweet.accept();
         }

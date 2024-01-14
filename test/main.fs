@@ -1,9 +1,9 @@
 // Creating variables
-Store < "cool", 5000;
-Store < "1cool10", "Cool indeed...";
+Store < "cool", 2500;
+Store < "1co5ol51", "so cool!";
 
-// Dropping variables
 Drop < "cool";
 
-// Print < !1cool10, "<- wow", !cool, "<- not wow";
-// Warn < !1cool10, "<- wow", !cool, "<- not wow";
+Warn < !cool, ".-.";
+Print < !1co5ol51, "._.";
+Print < !version;
