@@ -1,9 +1,6 @@
-// Creating variables
-Store < "cool", 2500;
-Store < "1co5ol51", "so cool!";
+// Modules
+Run < "module.fs";
+Run < "playground.fs";
 
-Drop < "cool";
-
-Warn < !cool, ".-.";
-Print < !1co5ol51, "._.";
-Print < !version;
+// Printing
+Print < !cool, !version;

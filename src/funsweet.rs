@@ -1,5 +1,7 @@
 use core::fmt;
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::read_to_string};
+
+use regex::Regex;
 
 use crate::{config::VERSION, function};
 
@@ -10,6 +12,7 @@ pub enum ArgType {
 }
 
 pub struct FunSweet {
+    pub path: String,
     pub taking_string: bool,
     pub taking_number: bool,
     pub taking_variable: bool,
@@ -24,7 +27,11 @@ pub struct FunSweet {
 }
 
 impl FunSweet {
-    pub fn new(content: &String) -> FunSweet {
+    pub fn new(path: &String) -> FunSweet {
+        let regex_directory_path = Regex::new(r".+/").unwrap();
+        let directory_path = regex_directory_path.captures(&path).unwrap()[0].to_string();
+
+        let content = &read_to_string(path).expect("to be a file");
         let mut global_variables = HashMap::new();
 
         global_variables.insert(
@@ -33,6 +40,7 @@ impl FunSweet {
         );
 
         return FunSweet {
+            path: directory_path,
             taking_string: false,
             taking_number: false,
             taking_variable: false,
@@ -121,6 +129,10 @@ fn parse_function(funsweet: &mut FunSweet) {
         function::store(funsweet);
     } else if funsweet.function_name == "Drop" {
         function::drop(funsweet);
+    } else if funsweet.function_name == "Run" {
+        function::run(funsweet);
+    } else if funsweet.function_name == "Operation" {
+        function::math_operation(funsweet);
     }
 }
 
@@ -132,7 +144,7 @@ fn parse_comment(funsweet: &mut FunSweet) {
     funsweet.reset();
 }
 
-pub fn parse_content(content: String) {
+pub fn parse_content(content: String) -> FunSweet {
     let mut funsweet = FunSweet::new(&content);
 
     while funsweet.index < funsweet.content.len() {
@@ -154,4 +166,6 @@ pub fn parse_content(content: String) {
             funsweet.accept();
         }
     }
+
+    return funsweet;
 }

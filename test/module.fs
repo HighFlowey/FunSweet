@@ -1,0 +1,1 @@
+Store < "cool", "Cool indeed!";
