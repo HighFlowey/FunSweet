@@ -3,6 +3,7 @@ use std::{
     ops::Index,
     time::{Duration, Instant},
 };
+mod install;
 
 mod config;
 use config::{BENCHMARK, BENCHMARK_AMOUNT};
@@ -17,6 +18,8 @@ struct Cli {
 }
 
 fn main() {
+    install::main();
+
     let cli = Cli::parse();
 
     if BENCHMARK == false {
